@@ -1,0 +1,36 @@
+{
+  "id": "arrays/two-sum",
+  "title": "Two Sum",
+  "topic": "arrays",
+  "difficulty": "easy",
+  "tags": ["arrays", "hashing", "complement-lookup"],
+  "summary": "Find two indices whose values add up to a target using a hash map.",
+  "visualizable": true,
+  "animationType": "array",
+  "steps": [
+    {
+      "description": "Start with nums = [2, 7, 11, 15], target = 9, empty hash map",
+      "array": [2, 7, 11, 15],
+      "highlight": [],
+      "hashMap": {}
+    },
+    {
+      "description": "i=0: nums[0]=2, complement=7, not in map. Store {2: 0}",
+      "array": [2, 7, 11, 15],
+      "highlight": [0],
+      "hashMap": {"2": 0}
+    },
+    {
+      "description": "i=1: nums[1]=7, complement=2, found in map at index 0. Return [0, 1]",
+      "array": [2, 7, 11, 15],
+      "highlight": [0, 1],
+      "hashMap": {"2": 0},
+      "result": [0, 1]
+    }
+  ],
+  "relatedNotes": "docs/problems/arrays/two-sum.md",
+  "solutionPaths": {
+    "cpp": "cpp/src/arrays/two-sum.cpp",
+    "go": "go/problems/arrays/two-sum.go"
+  }
+}

@@ -1,0 +1,327 @@
+/* --- Hero --- */
+.hero {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+.hero h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.hero p {
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+  font-size: 1.05rem;
+}
+
+/* --- Loading --- */
+.loading {
+  text-align: center;
+  padding: 4rem;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+/* --- Topic Section --- */
+.topic-heading {
+  text-transform: capitalize;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #2a2e3f;
+}
+.topic-section {
+  margin-bottom: 2.5rem;
+}
+
+/* --- Problem Cards --- */
+.problem-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.problem-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: var(--bg-card);
+  border: 1px solid #2a2e3f;
+  border-radius: var(--radius-lg);
+  padding: 1.2rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  text-align: left;
+  color: var(--text);
+  font-family: inherit;
+  font-size: inherit;
+}
+.problem-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent);
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.card-title {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+.card-difficulty {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.card-summary {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.tag {
+  background: #2a2e3f;
+  color: var(--accent);
+  font-size: 0.75rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+}
+.card-no-viz {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* --- Back Button --- */
+.back-button {
+  background: none;
+  border: 1px solid #2a2e3f;
+  color: var(--text-muted);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: color 0.15s, border-color 0.15s;
+  margin-bottom: 1.5rem;
+}
+.back-button:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+/* --- Detail Header --- */
+.detail-header {
+  margin-bottom: 2rem;
+}
+.detail-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+}
+.detail-meta {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  align-items: center;
+}
+.detail-topic {
+  background: #2a2e3f;
+  color: var(--accent);
+  padding: 0.2rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  text-transform: capitalize;
+}
+.diff-easy { color: var(--color-easy); }
+.diff-medium { color: var(--color-medium); }
+.diff-hard { color: var(--color-hard); }
+.detail-difficulty {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+.detail-summary {
+  color: var(--text-muted);
+  margin-top: 0.75rem;
+  font-size: 1rem;
+}
+
+/* --- Visualization --- */
+.visualization {
+  background: var(--bg-card);
+  border: 1px solid #2a2e3f;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+.viz-main {
+  margin-bottom: 1.5rem;
+}
+
+/* --- Bars --- */
+.bars-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 220px;
+  padding: 0.5rem;
+}
+.bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  max-width: 80px;
+  height: 100%;
+  justify-content: flex-end;
+}
+.bar {
+  width: 100%;
+  background: var(--bar-default);
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 0.5rem;
+  transition: height 0.4s ease, background 0.3s ease;
+  position: relative;
+}
+.bar-highlight {
+  background: var(--bar-highlight);
+}
+.bar-sorted {
+  background: var(--bar-sorted);
+}
+.bar-result {
+  background: var(--bar-result);
+}
+.bar-label {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #fff;
+}
+.bar-index {
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* --- HashMap View --- */
+.hashmap-view {
+  margin-bottom: 1.5rem;
+}
+.hashmap-view h4 {
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-muted);
+}
+.hashmap-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+.hashmap-entries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.hashmap-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #2a2e3f;
+  padding: 0.3rem 0.8rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+}
+.hashmap-key {
+  color: var(--accent);
+  font-weight: 600;
+}
+.hashmap-arrow {
+  color: var(--text-muted);
+}
+.hashmap-value {
+  color: var(--text);
+}
+
+/* --- Step Description --- */
+.step-description {
+  background: #1e2233;
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  min-height: 3rem;
+}
+
+/* --- Step Controls --- */
+.step-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.step-controls button {
+  background: #2a2e3f;
+  border: 1px solid #3b4261;
+  color: var(--text);
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  transition: background 0.15s, border-color 0.15s;
+}
+.step-controls button:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  border-color: var(--accent);
+}
+.step-controls button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.step-counter {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* --- Solution Paths --- */
+.solution-paths {
+  background: var(--bg-card);
+  border: 1px solid #2a2e3f;
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+}
+.solution-paths h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+}
+.solution-paths ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.solution-paths code {
+  background: #2a2e3f;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.no-animation {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 2rem;
+  text-align: center;
+}

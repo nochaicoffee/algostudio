@@ -1,0 +1,21 @@
+# C++ build artifacts
+cpp/build/
+*.o
+*.d
+
+# Go
+go/bin/
+
+# Node / Vite
+apps/visualizer/node_modules/
+apps/visualizer/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

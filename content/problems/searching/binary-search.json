@@ -1,0 +1,38 @@
+{
+  "id": "searching/binary-search",
+  "title": "Binary Search",
+  "topic": "searching",
+  "difficulty": "easy",
+  "tags": ["searching", "divide-and-conquer", "sorted-array"],
+  "summary": "Find a target in a sorted array by halving the search space each step.",
+  "visualizable": true,
+  "animationType": "array",
+  "steps": [
+    {
+      "description": "Sorted array, target = 23. left=0, right=9, search the full array.",
+      "array": [2, 5, 8, 12, 16, 23, 38, 56, 72, 91],
+      "highlight": []
+    },
+    {
+      "description": "mid=4, arr[4]=16 < 23. Move left to mid+1=5.",
+      "array": [2, 5, 8, 12, 16, 23, 38, 56, 72, 91],
+      "highlight": [4]
+    },
+    {
+      "description": "left=5, right=9. mid=7, arr[7]=56 > 23. Move right to mid-1=6.",
+      "array": [2, 5, 8, 12, 16, 23, 38, 56, 72, 91],
+      "highlight": [7]
+    },
+    {
+      "description": "left=5, right=6. mid=5, arr[5]=23 == target. Found at index 5!",
+      "array": [2, 5, 8, 12, 16, 23, 38, 56, 72, 91],
+      "highlight": [5],
+      "result": [5]
+    }
+  ],
+  "relatedNotes": "docs/problems/searching/binary-search.md",
+  "solutionPaths": {
+    "cpp": "cpp/src/searching/binary-search.cpp",
+    "go": "go/problems/searching/binary-search.go"
+  }
+}

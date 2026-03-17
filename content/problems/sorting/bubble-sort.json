@@ -1,0 +1,65 @@
+{
+  "id": "sorting/bubble-sort",
+  "title": "Bubble Sort",
+  "topic": "sorting",
+  "difficulty": "easy",
+  "tags": ["sorting", "in-place", "stable"],
+  "summary": "Sort by repeatedly swapping adjacent elements that are out of order.",
+  "visualizable": true,
+  "animationType": "sorting",
+  "steps": [
+    {
+      "description": "Initial array",
+      "array": [64, 34, 25, 12],
+      "highlight": [],
+      "sorted": []
+    },
+    {
+      "description": "Pass 1: Compare 64 and 34 → swap",
+      "array": [34, 64, 25, 12],
+      "highlight": [0, 1],
+      "sorted": []
+    },
+    {
+      "description": "Pass 1: Compare 64 and 25 → swap",
+      "array": [34, 25, 64, 12],
+      "highlight": [1, 2],
+      "sorted": []
+    },
+    {
+      "description": "Pass 1: Compare 64 and 12 → swap. 64 is now in place.",
+      "array": [34, 25, 12, 64],
+      "highlight": [2, 3],
+      "sorted": [3]
+    },
+    {
+      "description": "Pass 2: Compare 34 and 25 → swap",
+      "array": [25, 34, 12, 64],
+      "highlight": [0, 1],
+      "sorted": [3]
+    },
+    {
+      "description": "Pass 2: Compare 34 and 12 → swap. 34 is now in place.",
+      "array": [25, 12, 34, 64],
+      "highlight": [1, 2],
+      "sorted": [2, 3]
+    },
+    {
+      "description": "Pass 3: Compare 25 and 12 → swap. 25 is now in place.",
+      "array": [12, 25, 34, 64],
+      "highlight": [0, 1],
+      "sorted": [1, 2, 3]
+    },
+    {
+      "description": "Array is fully sorted!",
+      "array": [12, 25, 34, 64],
+      "highlight": [],
+      "sorted": [0, 1, 2, 3]
+    }
+  ],
+  "relatedNotes": "docs/problems/sorting/bubble-sort.md",
+  "solutionPaths": {
+    "cpp": "cpp/src/sorting/bubble-sort.cpp",
+    "go": "go/problems/sorting/bubble-sort.go"
+  }
+}
