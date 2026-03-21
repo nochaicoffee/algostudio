@@ -13,3 +13,18 @@ func TwoSum(nums []int, target int) []int {
 	}
 	return nil
 }
+
+// TwoSumsBruteForce is a brute force approach to the two sum problem.
+// It uses a nested loop to check every pair of numbers in the array.
+// Time complexity: O(n^2)
+// Space complexity: O(1)
+func TwoSumsBruteForce(nums []int, target int) []int {
+	for i := 0; i < len(nums); i++ {
+		for j := i + 1; j < len(nums); j++ {
+			if nums[i]+nums[j] == target {
+				return []int{i, j}
+			}
+		}
+	}
+	return []int{-1, -1}
+}

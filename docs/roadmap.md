@@ -4,7 +4,7 @@ A topic-by-topic learning sequence. Check off topics as you gain confidence.
 
 ## Phase 1 — Fundamentals
 
-- [ ] Arrays & Hashing
+- [ ] Arrays & Hashing — notes: [Dynamic array](notes/arrays/dynamic-array.md)
 - [ ] Two Pointers
 - [ ] Sliding Window
 - [ ] Stacks & Queues

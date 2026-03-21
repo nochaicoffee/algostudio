@@ -1,0 +1,44 @@
+---
+description: Enforces the detailed problem-note standard for DSA problem documentation
+globs: docs/problems/**/*.md
+alwaysApply: false
+---
+
+# Problem Doc Standard
+
+Every file in `docs/problems/` must include **all** of the following sections in order.
+
+## Required Sections
+
+1. **Problem Statement** — concise description of the problem.
+2. **Pattern / Topic** — category and interview pattern.
+3. **Approaches** — numbered sub-sections, each with the **full anatomy** below:
+   - **1. Brute Force**
+   - **2. Alternative Approach** (or explicit statement: "No notable intermediate approach for this problem.")
+   - **3. Optimal Approach**
+
+### Per-Approach Anatomy (required for every approach)
+
+Each approach sub-section must contain all of the following, in order:
+
+- **Idea** — one-sentence summary.
+- **Step-by-step** — numbered list of the algorithm's operations.
+- **Why it works** — correctness argument.
+- **Time Complexity Breakdown** — list each contributing operation with its cost, then state the combined/dominant cost with reasoning (e.g. "Sorting costs O(n log n), scan costs O(n). Combined O(n log n + n) = O(n log n), dominated by sorting.").
+- **Space Complexity Breakdown** — list each auxiliary structure and its cost, then state total extra space.
+- **Pros** — concrete advantages.
+- **Cons** — concrete disadvantages.
+- **Mermaid Diagram** — a `mermaid` code block (flowchart, sequence, or state) illustrating the approach's logic. Every approach gets its own diagram.
+
+4. **Approach Comparison** — markdown table (columns: Approach, Time, Space, Pros, Cons).
+5. **Key Pitfalls** — common mistakes and edge cases.
+6. **Interview Talking Points** — what to mention in an interview walkthrough.
+7. **Solutions** — links to C++, Go, and visualizer metadata files.
+
+## Guidelines
+
+- Never state a final Big-O without explaining where it comes from.
+- Use Mermaid for all visuals; choose the diagram type that best fits the approach.
+- Keep pros/cons concrete and specific (avoid generic filler).
+- If there is no meaningful alternative between brute force and optimal, say so explicitly rather than omitting the section.
+- Follow the canonical template defined in `docs/plans/dsa-platform.md`.

@@ -71,15 +71,102 @@ TODO — describe the problem.
 ## Pattern / Topic
 $TOPIC
 
-## Brute Force
-TODO — naive approach and its complexity.
+## Approaches
 
-## Optimal Approach
-TODO — best known solution with explanation.
+### 1. Brute Force
 
-## Complexity
-- Time: O(?)
-- Space: O(?)
+**Idea:** TODO — one-sentence summary.
+
+**Step-by-step:**
+1. TODO
+
+**Why it works:** TODO
+
+**Time Complexity Breakdown:**
+- TODO: O(?)
+- Combined: O(?) — TODO explain which term dominates.
+
+**Space Complexity Breakdown:**
+- TODO: O(?)
+- Total extra space: O(?)
+
+**Pros:** TODO
+**Cons:** TODO
+
+\`\`\`mermaid
+flowchart TD
+    A[Start] --> B[TODO]
+    B --> C[End]
+\`\`\`
+
+---
+
+### 2. Alternative Approach
+
+TODO — describe an intermediate or different approach, or state:
+"No notable intermediate approach for this problem."
+
+**Idea:** TODO
+
+**Step-by-step:**
+1. TODO
+
+**Why it works:** TODO
+
+**Time Complexity Breakdown:**
+- TODO: O(?)
+- Combined: O(?) — TODO explain which term dominates.
+
+**Space Complexity Breakdown:**
+- TODO: O(?)
+- Total extra space: O(?)
+
+**Pros:** TODO
+**Cons:** TODO
+
+\`\`\`mermaid
+flowchart TD
+    A[Start] --> B[TODO]
+    B --> C[End]
+\`\`\`
+
+---
+
+### 3. Optimal Approach
+
+**Idea:** TODO
+
+**Step-by-step:**
+1. TODO
+
+**Why it works:** TODO
+
+**Time Complexity Breakdown:**
+- TODO: O(?)
+- Combined: O(?) — TODO explain which term dominates.
+
+**Space Complexity Breakdown:**
+- TODO: O(?)
+- Total extra space: O(?)
+
+**Pros:** TODO
+**Cons:** TODO
+
+\`\`\`mermaid
+flowchart TD
+    A[Start] --> B[TODO]
+    B --> C[End]
+\`\`\`
+
+---
+
+## Approach Comparison
+
+| Approach | Time | Space | Pros | Cons |
+|----------|------|-------|------|------|
+| Brute Force | O(?) | O(?) | TODO | TODO |
+| Alternative | O(?) | O(?) | TODO | TODO |
+| Optimal | O(?) | O(?) | TODO | TODO |
 
 ## Key Pitfalls
 TODO — common mistakes and edge cases.

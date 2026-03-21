@@ -54,7 +54,11 @@ Topics include: `arrays`, `strings`, `linked-lists`, `trees`, `graphs`, `sorting
 
 ## Note Template
 
-Each `docs/problems/<topic>/<slug>.md` follows this structure:
+Each `docs/problems/<topic>/<slug>.md` follows this structure.
+
+Every approach subsection must contain the same anatomy: Idea, Step-by-step
+logic, Why it works, Time Complexity Breakdown (derive the cost, don't just
+state it), Space Complexity Breakdown, Pros, Cons, and its own Mermaid Diagram.
 
 ```markdown
 # <Problem Title>
@@ -65,15 +69,56 @@ Brief description of the problem.
 ## Pattern / Topic
 Which category and interview pattern this maps to.
 
-## Brute Force
-Naive approach and its complexity.
+## Approaches
 
-## Optimal Approach
-Best known solution with explanation.
+### 1. Brute Force
 
-## Complexity
-- Time: O(...)
-- Space: O(...)
+**Idea:** One-sentence summary of the approach.
+
+**Step-by-step:**
+1. ...
+2. ...
+
+**Why it works:** Explain the correctness argument.
+
+**Time Complexity Breakdown:**
+- <operation A>: O(...)
+- <operation B>: O(...)
+- Combined: O(...) — state which term dominates and why.
+
+**Space Complexity Breakdown:**
+- <auxiliary structure>: O(...)
+- Total extra space: O(...)
+
+**Pros:** ...
+**Cons:** ...
+
+```mermaid
+flowchart TD
+    ...
+```
+
+---
+
+### 2. <Alternative Approach> (if applicable)
+If there is no meaningful alternative beyond brute force and optimal, state:
+"No notable intermediate approach for this problem."
+Otherwise, use the same anatomy as above (Idea → Diagram).
+
+---
+
+### 3. Optimal Approach
+Same anatomy (Idea → Diagram).
+
+---
+
+## Approach Comparison
+
+| Approach | Time | Space | Pros | Cons |
+|----------|------|-------|------|------|
+| Brute Force | O(...) | O(...) | ... | ... |
+| Alternative | O(...) | O(...) | ... | ... |
+| Optimal | O(...) | O(...) | ... | ... |
 
 ## Key Pitfalls
 Common mistakes and edge cases.
@@ -130,3 +175,6 @@ Each `content/problems/<topic>/<slug>.json`:
 | Date | Decision |
 |---|---|
 | 2026-03-17 | Initial structure agreed. React + Vite for visualizer, same problems in both C++ and Go. |
+| 2026-03-19 | Enriched note template: added per-approach pros/cons, alternative approaches, approach comparison table, and mandatory Mermaid visual section. |
+| 2026-03-19 | Updated `scripts/new-problem.sh` scaffold to match enriched template. Added `.cursor/rules/problem-docs.mdc` scoped to `docs/problems/**/*.md`. Retrofitted all 3 existing problem notes (two-sum, binary-search, bubble-sort). |
+| 2026-03-19 | Detailed update: each approach now requires its own Mermaid diagram, step-by-step logic, and explicit time/space complexity derivations (not just final Big-O). Template, scaffold, rule, and all existing notes updated. |
