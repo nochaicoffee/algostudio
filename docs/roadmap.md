@@ -4,6 +4,7 @@ A topic-by-topic learning sequence. Check off topics as you gain confidence.
 
 ## Phase 1 — Fundamentals
 
+- [ ] C++ Language Basics — notes: [C++ fundamentals](notes/cpp/fundamentals.md)
 - [ ] Arrays & Hashing — notes: [Dynamic array](notes/arrays/dynamic-array.md)
 - [ ] Two Pointers
 - [ ] Sliding Window
