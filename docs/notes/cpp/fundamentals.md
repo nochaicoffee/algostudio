@@ -49,12 +49,16 @@ A comprehensive, single-document reference for C++ data structures, algorithms, 
   - [3.16 vtable / vptr](#316-vtable--vptr)
   - [3.17 Practical OOP Design Advice](#317-practical-oop-design-advice-for-interviews)
 - [4. C++ Standard Library for DSA](#4-c-standard-library-for-dsa)
+  - [Reading Guide](#reading-guide)
+  - [Shared API Families](#shared-api-families)
+  - [Quick Selection Cheat Sheet](#quick-selection-cheat-sheet)
   - [Containers](#containers)
     - [Sequence Containers](#sequence-containers)
     - [Associative Containers (Ordered)](#associative-containers-ordered)
     - [Unordered Containers](#unordered-containers)
     - [Container Adaptors](#container-adaptors)
     - [Utility Types](#utility-types)
+  - [Common Function Differences](#common-function-differences)
   - [Algorithms](#algorithms)
     - [Sorting](#sorting)
     - [Searching](#searching)
@@ -68,6 +72,7 @@ A comprehensive, single-document reference for C++ data structures, algorithms, 
   - [Lambda and Comparator Patterns](#lambda-and-comparator-patterns)
   - [Strings](#strings)
   - [Numerics and Utilities](#numerics-and-utilities)
+  - [Interview-Focused Q&A](#interview-focused-qa)
 - [5. Templates and Generic Programming](#5-templates-and-generic-programming)
   - [5.1 Function Templates](#51-function-templates)
   - [5.2 Class Templates](#52-class-templates)
@@ -1728,9 +1733,81 @@ public:
 
 # 4. C++ Standard Library for DSA
 
-The standard library is **the** reason C++ dominates competitive programming and remains a top choice for coding interviews. This section is your complete operational reference: every container, algorithm, and utility you need, with complexity guarantees, iterator invalidation rules, and interview patterns.
+The standard library is **the** reason C++ dominates competitive programming and remains a top choice for coding interviews. This section is your complete operational reference: every container, algorithm, and utility you need, with complexity guarantees, iterator invalidation rules, internal data structure breakdowns, and interview patterns.
 
 > **Compiler note:** all code examples target **C++20** or later. Compile with `g++ -std=c++20 -O2`.
+>
+> **Standards:** C++23 additions are called out inline where relevant. Implementation details (growth factors, SSO, exact tree type) are marked as **typical** — the standard specifies behavior and complexity, not exact layouts.
+
+---
+
+## Reading Guide
+
+### Complexity notation
+
+- `n`: current container size
+- `k`: number of affected elements / duplicates / inserted elements
+- "amortized" means averaged over a sequence of operations
+- Unordered containers show **average** and **worst-case** separately
+- "extra space" means temporary memory used by the operation itself, not the container's owned storage
+
+### What the standard guarantees vs what implementations usually do
+
+- `std::vector` and `std::basic_string` guarantee **contiguous** storage.
+- `std::array` is a fixed-size wrapper around an actual array.
+- `std::deque` guarantees random access and efficient growth at both ends, but the exact segmented layout is implementation-defined.
+- Ordered associative containers guarantee sorted order and logarithmic search/insertion/erasure; they are **usually** red-black trees.
+- Unordered associative containers guarantee bucket-based behavior and average O(1) lookup/insert/erase; the exact collision strategy is implementation-defined.
+- `std::priority_queue` guarantees heap semantics through its interface; the usual implementation is a binary heap on top of `std::vector`.
+- Small-string optimization (SSO) is common but **not required** by the standard.
+
+### Iterator and reference invalidation
+
+Per [cppreference's container invalidation summary](https://en.cppreference.com/w/cpp/container), read-only operations never invalidate iterators or references. Mutating operations often do. Interview bugs frequently come from assuming:
+
+- `vector` references survive reallocation
+- `deque::end()` behaves like `list::end()`
+- `unordered_map` iterators survive rehash
+- `clear()` keeps references alive
+
+Treat invalidation as part of the API, not an implementation detail.
+
+---
+
+## Shared API Families
+
+These are the common, non-deprecated APIs you will see across many containers. Container-specific sections below list the functions that matter most and note exceptions.
+
+| API family | Present on | What it does | Usual complexity | Notes |
+|---|---|---|---|---|
+| Constructors / range constructors / initializer-list | almost all | Build from size, range, list, or another container | usually O(n) | Adaptors and `bitset` have their own shapes |
+| Copy / move constructor and assignment | all standard containers | Copy or move the container | copy O(n), move usually O(1) | Move can degrade if allocators differ |
+| `begin`, `end`, `cbegin`, `cend`, `rbegin`, `rend` | all real containers except adaptors | Iterator access | O(1) | `forward_list` also has `before_begin` |
+| `empty`, `size`, `max_size` | most containers | Capacity queries | O(1) | `forward_list` has no `size()` |
+| `front`, `back`, `data` | where supported | Direct element access | O(1) | availability differs by container |
+| `clear` | most dynamic containers | Erase all elements | O(n) | invalidates all iterators/references |
+| `swap` | almost all | Exchange contents | usually O(1) | `array::swap` is O(n) |
+| non-member `erase` / `erase_if` (C++20) | many containers and `string` | Convenience removal helpers | container-dependent | clean interview API |
+
+---
+
+## Quick Selection Cheat Sheet
+
+| Type | Typical underlying model | Iterators | Order kept? | Lookup | Insert/erase best use | Biggest caveat |
+|---|---|---|---|---|---|---|
+| `array` | fixed in-object array | random access, contiguous | yes | O(1) index | no structural insert/erase | size fixed at compile time |
+| `vector` | dynamic contiguous buffer | random access, contiguous | yes | O(1) index | append-heavy | reallocation invalidates all |
+| `deque` | segmented array | random access | yes | O(1) index | push/pop both ends | not contiguous |
+| `list` | doubly linked nodes | bidirectional | yes | O(n) | splice, iterator erase | poor cache locality |
+| `forward_list` | singly linked nodes | forward | yes | O(n) | minimal-overhead linked | no `size()`, no back ops |
+| `set` / `multiset` | usually red-black tree | bidirectional | sorted | O(log n) | sorted unique / dup keys | no random access |
+| `map` / `multimap` | usually red-black tree | bidirectional | sorted by key | O(log n) | sorted key-value | `operator[]` only on `map` |
+| `unordered_set` / `unordered_map` | bucketed hash table | forward at least | no | avg O(1) | membership / frequency | rehash invalidates iters |
+| `stack` | adaptor over `deque` | none exposed | LIFO only | top O(1) | DFS, matching, mono stack | no iteration |
+| `queue` | adaptor over `deque` | none exposed | FIFO only | front/back O(1) | BFS | no random access |
+| `priority_queue` | usually binary heap | none exposed | heap order | top O(1) | repeated max/min extract | no decrease-key |
+| `string` | contiguous char buffer | random access, contiguous | yes | O(1) index | parsing, text assembly | mutating ops invalidate ptrs |
+| `bitset<N>` | fixed-size bit sequence | no normal iterators | index order | O(1) bit access | dense boolean flags | compile-time size |
 
 ---
 
@@ -1748,15 +1825,21 @@ Sequence containers maintain elements in the order you insert them.
 
 **When to use:** fixed-size collections known at compile time — board grids, direction vectors, small lookup tables.
 
-**Internal structure:** thin wrapper over a C-style array; no heap allocation. Size `N` is a template parameter.
+**How it works internally (beginner-friendly):**
+`std::array` is a thin wrapper around a plain C-style array `T[N]`. The elements live directly inside the object (on the stack if the array is a local variable). There is no heap allocation and no indirection — the compiler knows the exact size at compile time. Think of it as a safer, STL-compatible version of `int arr[10]`.
 
-| Operation | Complexity |
-|---|---|
-| `operator[]` / `at()` | O(1) |
-| `front()` / `back()` | O(1) |
-| Iteration | O(n) |
-| `size()` | O(1) — constexpr |
-| Insert / Erase | N/A — fixed size |
+**Standard guarantee:** fixed size, contiguous storage, no heap allocation caused by the container itself.
+
+| Function(s) | What it does | Time | Extra space | Notes |
+|---|---|---|---|---|
+| `operator[]` | unchecked indexed access | O(1) | O(1) | UB if out of range |
+| `at()` | bounds-checked indexed access | O(1) | O(1) | throws on bad index |
+| `front()`, `back()` | first / last element | O(1) | O(1) | |
+| `data()` | pointer to first element | O(1) | O(1) | bridge to C APIs |
+| `begin()`, `end()`, `rbegin()`, `rend()` | iterator access | O(1) | O(1) | contiguous/random-access |
+| `empty()`, `size()`, `max_size()` | capacity queries | O(1) | O(1) | all `constexpr` |
+| `fill(value)` | assign every element | O(n) | O(1) | |
+| `swap(other)` | swap element-wise | O(n) | O(1) | unlike most container swaps |
 
 **Iterator invalidation:** iterators never invalidate (size never changes).
 
@@ -1769,7 +1852,6 @@ Sequence containers maintain elements in the order you insert them.
 #include <iostream>
 
 int main() {
-    // direction vectors for grid BFS/DFS
     constexpr std::array<std::pair<int,int>, 4> dirs = {{{0,1},{0,-1},{1,0},{-1,0}}};
 
     int r = 3, c = 4, rows = 10, cols = 10;
@@ -1790,19 +1872,35 @@ int main() {
 
 **When to use:** the default container for almost everything — dynamic arrays, adjacency lists, stacks (with `push_back`/`pop_back`), result accumulation.
 
-**Internal structure:** contiguous heap-allocated buffer. When capacity is exceeded, allocates a new buffer (typically 2×), copies/moves elements, frees old buffer. Amortized O(1) `push_back`.
+**How it works internally (beginner-friendly):**
+A vector owns one contiguous block of heap memory. It tracks three things: a pointer to the buffer, the current `size` (how many elements are in use), and the `capacity` (how many elements the buffer can hold). When you `push_back` and `size == capacity`, the vector allocates a new larger buffer (typically 2x the old capacity), moves all existing elements over, and frees the old buffer. This is why `push_back` is *amortized* O(1) — most calls are O(1), but occasionally one triggers an O(n) reallocation.
 
-| Operation | Complexity |
-|---|---|
-| `operator[]` / `at()` | O(1) |
-| `push_back` | amortized O(1) |
-| `pop_back` | O(1) |
-| `insert(it, val)` | O(n) — shifts elements |
-| `erase(it)` | O(n) — shifts elements |
-| `front()` / `back()` | O(1) |
-| `size()` / `empty()` | O(1) |
-| `reserve(n)` | O(n) one-time |
-| `clear()` | O(n) (destructor calls) |
+```
+Buffer:  [ elem0 | elem1 | elem2 | ---- | ---- ]
+                                     ^         ^
+                                   size=3   capacity=5
+```
+
+**Standard guarantee:** contiguous storage; growth factor is **not specified** (2x is typical but 1.5x is also common).
+
+| Function(s) | What it does | Time | Extra space | Notes |
+|---|---|---|---|---|
+| `operator[]`, `at()` | indexed access | O(1) | O(1) | `at()` checks bounds |
+| `front()`, `back()`, `data()` | endpoint / raw-buffer access | O(1) | O(1) | `data()` bridges to C APIs |
+| `begin()`, `end()` etc. | iterator access | O(1) | O(1) | contiguous/random-access |
+| `empty()`, `size()`, `capacity()` | size/capacity queries | O(1) | O(1) | `capacity() >= size()` |
+| `reserve(n)` | request capacity for at least `n` elements | O(n) if realloc, else O(1) | O(n) temporary if realloc | does **not** change size |
+| `resize(n)` | change logical size | O(\|new-old\|) + possible realloc | O(n) temporary if realloc | may value-init new elements |
+| `shrink_to_fit()` | non-binding request to reduce capacity | O(n) if honored | O(n) temporary | implementation may ignore |
+| `push_back(x)` | append existing element | amortized O(1), worst O(n) | O(1) or O(n) on realloc | copy/move into container |
+| `emplace_back(args...)` | construct element in place at end | amortized O(1), worst O(n) | same as `push_back` | avoids a temporary in some cases |
+| `pop_back()` | remove last element | O(1) | O(1) | does not reduce capacity |
+| `insert(pos, ...)` | insert before `pos` | O(n + k) | O(k) + possible realloc | shifts trailing elements |
+| `emplace(pos, args...)` | in-place construction before `pos` | O(n) | O(1) + possible realloc | still shifts elements |
+| `erase(pos)` / `erase(first, last)` | remove and close gap | O(n) | O(1) | moves trailing elements left |
+| `assign(...)` | replace contents wholesale | O(n) | O(n) if realloc needed | simpler than clear + inserts |
+| `clear()` | erase all elements | O(n) | O(1) | capacity usually stays |
+| `swap(other)` | exchange buffers | O(1) | O(1) | iterators follow their buffer |
 
 **Iterator invalidation:**
 
@@ -1814,6 +1912,12 @@ int main() {
 | `erase` | at or after erasure point |
 | `clear` | **all** |
 | `reserve` | **all** (if capacity changes) |
+
+Key differences:
+
+- `reserve()` vs `resize()`: `reserve()` changes capacity only; `resize()` changes size. Interview bug: `reserve(n)` then `v[i]` for `i < n` is still invalid if `size() == 0`.
+- `push_back()` vs `emplace_back()`: `push_back()` takes an existing object; `emplace_back()` constructs in place from constructor arguments.
+- `clear()` vs `shrink_to_fit()`: `clear()` removes elements but usually keeps capacity; `shrink_to_fit()` asks to release unused memory.
 
 **Interview patterns:**
 - Adjacency list: `vector<vector<int>> adj(n);`
@@ -1827,25 +1931,20 @@ int main() {
 #include <iostream>
 
 int main() {
-    // adjacency list for a graph with 5 nodes
     int n = 5;
     std::vector<std::vector<int>> adj(n);
     adj[0].push_back(1);
     adj[0].push_back(2);
     adj[1].push_back(3);
 
-    // prefix sum
     std::vector<int> nums = {1, 2, 3, 4, 5};
     std::vector<int> prefix(nums.size() + 1, 0);
     for (int i = 0; i < (int)nums.size(); ++i)
         prefix[i + 1] = prefix[i] + nums[i];
-    // sum of range [1, 3) = prefix[3] - prefix[1] = 6 - 1 = 5
     std::cout << "sum [1,3): " << prefix[3] - prefix[1] << "\n";
 
-    // erase-remove idiom: remove all even numbers
     std::vector<int> v = {1, 2, 3, 4, 5, 6};
     v.erase(std::remove_if(v.begin(), v.end(), [](int x){ return x % 2 == 0; }), v.end());
-    // v = {1, 3, 5}
 }
 ```
 
@@ -1857,16 +1956,31 @@ int main() {
 
 **When to use:** need O(1) insertion/removal at both front and back — BFS queues, sliding window maximum.
 
-**Internal structure:** array of fixed-size blocks (chunks). Maintains a map of block pointers. Supports random access but with an extra indirection compared to vector.
+**How it works internally (beginner-friendly):**
+A deque ("double-ended queue") stores elements in multiple fixed-size blocks (chunks) rather than one contiguous buffer. A central "map" array holds pointers to each block. When you `push_front` or `push_back`, a new block is allocated only when the current end block is full. This means random access still works in O(1) — the deque computes `block_index = i / block_size` and `offset = i % block_size` — but there is one extra indirection compared to vector.
 
-| Operation | Complexity |
-|---|---|
-| `operator[]` / `at()` | O(1) |
-| `push_back` / `push_front` | amortized O(1) |
-| `pop_back` / `pop_front` | O(1) |
-| `insert(it, val)` | O(n) |
-| `erase(it)` | O(n) |
-| `size()` / `empty()` | O(1) |
+```
+Map:   [ ptr0 | ptr1 | ptr2 | ptr3 ]
+         |       |       |       |
+         v       v       v       v
+       [blk0] [blk1] [blk2] [blk3]
+        (front elements)  (back elements)
+```
+
+**Standard guarantee:** constant-time random access and efficient insertion/removal at both ends; exact layout is not specified.
+
+| Function(s) | What it does | Time | Extra space | Notes |
+|---|---|---|---|---|
+| `operator[]`, `at()` | indexed access | O(1) | O(1) | one more indirection than vector |
+| `front()`, `back()` | endpoint access | O(1) | O(1) | |
+| `begin()`, `end()` | iterator access | O(1) | O(1) | random-access, not contiguous |
+| `empty()`, `size()` | capacity queries | O(1) | O(1) | no `capacity()` API |
+| `push_front`, `push_back` | add at ends | amortized O(1) | O(1) | may re-map blocks |
+| `emplace_front`, `emplace_back` | in-place add at ends | amortized O(1) | O(1) | |
+| `pop_front`, `pop_back` | remove at ends | O(1) | O(1) | ideal for queues |
+| `insert(pos, ...)` / `emplace(pos, ...)` | insert in middle | O(n) | O(1) or O(k) | shifts toward nearer end |
+| `erase(pos)` / `erase(first, last)` | erase from middle/range | O(n) | O(1) | cheap only at ends |
+| `clear()` | erase all elements | O(n) | O(1) | |
 
 **Iterator invalidation:**
 
@@ -1877,6 +1991,12 @@ int main() {
 | `erase` at front/back | only the erased element's iterator |
 | `erase` in the middle | **all** |
 
+Key differences from `vector`:
+
+- `deque` supports `push_front()` / `pop_front()` efficiently; `vector` does not.
+- `deque` is not contiguous — no `data()` pointer.
+- `deque::end()` is invalidated by erasing the last element.
+
 **Interview patterns:**
 - Sliding window maximum (monotonic deque): store indices.
 - BFS — `std::queue` uses `deque` as its default backend.
@@ -1886,9 +2006,8 @@ int main() {
 #include <vector>
 #include <iostream>
 
-// sliding window maximum
 std::vector<int> maxSlidingWindow(const std::vector<int>& nums, int k) {
-    std::deque<int> dq; // stores indices
+    std::deque<int> dq;
     std::vector<int> result;
     for (int i = 0; i < (int)nums.size(); ++i) {
         while (!dq.empty() && dq.front() <= i - k) dq.pop_front();
@@ -1913,20 +2032,39 @@ int main() {
 
 **When to use:** need O(1) insert/erase at any known position (given an iterator), or O(1) splicing of sublists. LRU cache is the classic interview use case.
 
-**Internal structure:** doubly-linked list. Each node is separately heap-allocated.
+**How it works internally (beginner-friendly):**
+A list is a classic doubly linked list. Each element lives in its own heap-allocated node containing the value plus a `prev` and `next` pointer. Inserting or erasing at a known iterator is O(1) because you just relink two pointers without moving any other data. The downside is terrible cache locality — nodes are scattered across the heap, so iterating a list causes many cache misses compared to a contiguous vector.
 
-| Operation | Complexity |
-|---|---|
-| `push_back` / `push_front` | O(1) |
-| `pop_back` / `pop_front` | O(1) |
-| `insert(it, val)` | O(1) |
-| `erase(it)` | O(1) |
-| `splice` | O(1) |
-| Random access | **N/A** — no `operator[]` |
-| `size()` | O(1) since C++11 |
-| `sort()` | O(n log n) — merge sort |
+```
+[sentinel] <-> [node A] <-> [node B] <-> [node C] <-> [sentinel]
+  head/tail      prev/next    prev/next    prev/next
+```
+
+**Standard guarantee:** bidirectional iteration, stable iterators/references except for erased elements, efficient splice.
+
+| Function(s) | What it does | Time | Extra space | Notes |
+|---|---|---|---|---|
+| `front()`, `back()` | endpoint access | O(1) | O(1) | no random access |
+| `begin()`, `end()` | iterator access | O(1) | O(1) | bidirectional iterators |
+| `empty()`, `size()` | capacity queries | O(1) | O(1) | `size()` is O(1) since C++11 |
+| `push_front`, `push_back` | add at ends | O(1) | O(1) | node alloc per insert |
+| `emplace_front`, `emplace_back` | in-place add at ends | O(1) | O(1) | |
+| `insert(pos, x)` / `emplace(pos, ...)` | insert before iterator | O(1) given position | O(1) | finding position is O(n) |
+| `erase(pos)` / `erase(first, last)` | erase at iterator / range | O(1) single, O(k) range | O(1) | other iterators stay valid |
+| `splice(...)` | relink nodes from another list | O(1) for whole/single, O(k) for range | O(1) | moves nodes, not values |
+| `remove(val)`, `remove_if(pred)` | erase matching nodes | O(n) | O(1) | actually erases, unlike `std::remove_if` |
+| `unique()` | erase consecutive duplicates | O(n) | O(1) | only adjacent runs |
+| `merge(other)` | merge two sorted lists | O(n + m) | O(1) | both must be sorted |
+| `sort()` | member sort | O(n log n) | O(1) extra pointers | use this, not `std::sort` |
+| `reverse()` | reverse links | O(n) | O(1) | no data movement |
 
 **Iterator invalidation:** only the erased element's iterator is invalidated. All other iterators and references remain valid.
+
+Key differences:
+
+- `list::remove_if()` vs `std::remove_if()`: the member actually erases nodes; the algorithm only partitions and needs `erase`.
+- `sort()` on `list` is a member because `std::sort` requires random-access iterators.
+- `splice()` moves nodes, not values — O(1) relinking.
 
 **Interview patterns:**
 - **LRU Cache:** `std::list` + `std::unordered_map<key, list::iterator>`.
@@ -1939,7 +2077,7 @@ int main() {
 
 class LRUCache {
     int capacity;
-    std::list<std::pair<int,int>> order; // front = most recent
+    std::list<std::pair<int,int>> order;
     std::unordered_map<int, std::list<std::pair<int,int>>::iterator> map;
 public:
     LRUCache(int cap) : capacity(cap) {}
@@ -1947,7 +2085,7 @@ public:
     int get(int key) {
         auto it = map.find(key);
         if (it == map.end()) return -1;
-        order.splice(order.begin(), order, it->second); // move to front
+        order.splice(order.begin(), order, it->second);
         return it->second->second;
     }
 
@@ -1985,17 +2123,25 @@ int main() {
 
 **When to use:** memory-critical singly-linked list scenarios. Rarely used in interviews; prefer `std::list` unless memory is a concern.
 
-**Internal structure:** singly-linked list. No `size()` member (O(n) to compute via `std::distance`).
+**How it works internally (beginner-friendly):**
+A forward_list is a singly linked list — each node has a value and a `next` pointer (no `prev`). This saves one pointer per node compared to `std::list`. Because there is no `prev`, you can only insert/erase *after* a known position, not before it. The special `before_begin()` iterator points to a sentinel before the first element so that you can insert at the front.
 
-| Operation | Complexity |
-|---|---|
-| `push_front` | O(1) |
-| `insert_after(it, val)` | O(1) |
-| `erase_after(it)` | O(1) |
-| `push_back` | **N/A** — no tail pointer |
-| Random access | **N/A** |
+**Standard guarantee:** forward iteration only; no `size()`, no back operations.
 
-**Iterator invalidation:** only the erased element's iterator is invalidated.
+| Function(s) | What it does | Time | Extra space | Notes |
+|---|---|---|---|---|
+| `before_begin()` | iterator before first | O(1) | O(1) | needed because inserts happen "after" |
+| `begin()`, `end()` | iterator access | O(1) | O(1) | forward iterators only |
+| `empty()` | emptiness check | O(1) | O(1) | no `size()` |
+| `front()` | first element | O(1) | O(1) | no `back()` |
+| `push_front`, `emplace_front` | insert at front | O(1) | O(1) | primary fast operation |
+| `pop_front()` | remove front | O(1) | O(1) | |
+| `insert_after(pos, x)` / `emplace_after(pos, ...)` | insert after iterator | O(1) given position | O(1) | no plain `insert` |
+| `erase_after(pos)` / `erase_after(first, last)` | erase after iterator / range | O(1) or O(k) | O(1) | |
+| `remove(val)`, `remove_if(pred)` | erase matching nodes | O(n) | O(1) | actually erases |
+| `unique()`, `merge()`, `sort()`, `reverse()`, `splice_after()` | linked-list special ops | O(n) or O(n log n) | O(1) | `splice_after` is the singly-linked analog |
+
+**Iterator invalidation:** only erased elements are invalidated.
 
 **Interview patterns:** rare in interviews; linked-list reversal/cycle-detection problems are usually implemented with raw pointers or custom `ListNode`.
 
@@ -2005,9 +2151,9 @@ int main() {
 
 int main() {
     std::forward_list<int> fl = {1, 2, 3, 4};
-    fl.push_front(0);                      // {0, 1, 2, 3, 4}
+    fl.push_front(0);
     fl.insert_after(fl.begin(), 99);       // {0, 99, 1, 2, 3, 4}
-    fl.remove_if([](int x){ return x > 3; }); // {0, 1, 2, 3}
+    fl.remove_if([](int x){ return x > 3; });
 
     for (int x : fl) std::cout << x << " ";
 }
@@ -2022,8 +2168,8 @@ int main() {
 | `std::array` | fixed C-array | O(1) | N/A | N/A | N/A | N/A | contiguous, stack |
 | `std::vector` | dynamic array | O(1) | O(n) | amort. O(1) | O(n) | O(n) | contiguous, heap |
 | `std::deque` | array of blocks | O(1) | amort. O(1) | amort. O(1) | O(n) | O(n) | chunked, heap |
-| `std::list` | doubly-linked list | N/A | O(1) | O(1) | O(1)* | O(1)* | scattered, heap |
-| `std::forward_list` | singly-linked list | N/A | O(1) | N/A | O(1)* | O(1)* | scattered, heap |
+| `std::list` | doubly-linked list | N/A | O(1) | O(1) | O(1)\* | O(1)\* | scattered, heap |
+| `std::forward_list` | singly-linked list | N/A | O(1) | N/A | O(1)\* | O(1)\* | scattered, heap |
 
 *\* Given an iterator to the position. Finding the position is O(n).*
 
@@ -2038,7 +2184,20 @@ int main() {
 
 ### Associative Containers (Ordered)
 
-Ordered associative containers store elements in a **sorted** order (by key). Internally implemented as **red-black trees** (self-balancing BSTs). All major operations are O(log n).
+Ordered associative containers store elements in a **sorted** order (by key). All major operations are O(log n).
+
+**How they work internally (beginner-friendly):**
+All four ordered containers (`set`, `multiset`, `map`, `multimap`) are **usually** implemented as **red-black trees** — a type of self-balancing binary search tree. Each element is a node in the tree with a value, left/right child pointers, a parent pointer, and a color bit (red or black). The balancing rules guarantee that the tree height never exceeds 2 × log₂(n), which is why search/insert/erase are all O(log n). The tree stays sorted by traversing it in-order: left subtree → node → right subtree.
+
+```
+        [4, black]
+       /          \
+   [2, red]     [6, red]
+   /    \       /    \
+ [1,B] [3,B] [5,B] [7,B]
+```
+
+The standard does not require red-black trees specifically — it only requires logarithmic complexity and bidirectional iterators. But every major implementation (GCC, Clang, MSVC) uses red-black trees.
 
 ---
 
@@ -2048,18 +2207,24 @@ Ordered associative containers store elements in a **sorted** order (by key). In
 
 **When to use:** maintain a sorted collection of unique elements with O(log n) insert/find/erase — ordered statistics, range queries, maintaining sorted order online.
 
-| Operation | Complexity |
-|---|---|
-| `insert(val)` | O(log n) |
-| `erase(val)` / `erase(it)` | O(log n) / amortized O(1) |
-| `find(val)` | O(log n) |
-| `count(val)` | O(log n) |
-| `lower_bound(val)` | O(log n) |
-| `upper_bound(val)` | O(log n) |
-| `begin()` / `end()` | O(1) — min/max element |
-| `size()` | O(1) |
+| Function(s) | What it does | Time | Extra space | Notes |
+|---|---|---|---|---|
+| `insert(val)` | insert if key absent | O(log n) | O(1) | returns `{iterator, bool}` |
+| `insert(first, last)` | range insertion | O(k log(n + k)) | O(1) | sorted input may optimize |
+| `emplace(args...)`, `emplace_hint(hint, args...)` | in-place insertion | O(log n) or amortized O(1) near correct hint | O(1) | hint helps only if accurate |
+| `erase(it)` | erase known node | amortized O(1) | O(1) | |
+| `erase(key)` | erase matching key | O(log n) | O(1) | returns `0` or `1` |
+| `erase(first, last)` | erase range | O(log n + k) | O(1) | |
+| `find(key)`, `contains(key)` | lookup key | O(log n) | O(1) | `contains` is C++20 |
+| `count(key)` | count matches | O(log n) | O(1) | only `0` or `1` for `set` |
+| `lower_bound(key)` | first element `>= key` | O(log n) | O(1) | key tool for ordered queries |
+| `upper_bound(key)` | first element `> key` | O(log n) | O(1) | |
+| `equal_range(key)` | `{lower_bound, upper_bound}` | O(log n) | O(1) | |
+| `extract(key/it)` | detach node without destroying | O(log n) or amortized O(1) by it | O(1) | useful for key mutation (C++17) |
+| `merge(other)` | transfer non-conflicting nodes | O(k log(n + 1)) | O(1) | source keeps duplicates (C++17) |
+| `begin()` / `end()` | min/max access | O(1) | O(1) | |
 
-**Iterator invalidation:** only the erased element's iterator is invalidated. Insert never invalidates existing iterators.
+**Iterator invalidation:** only erased element's iterator is invalidated. Insert never invalidates existing iterators.
 
 **Interview patterns:**
 - Maintaining a sorted window of elements.
@@ -2074,16 +2239,15 @@ int main() {
     std::set<int> s = {5, 1, 3, 7, 2};
     s.insert(4);
 
-    // find closest value to target
     int target = 6;
-    auto it = s.lower_bound(target); // first >= target → points to 7
+    auto it = s.lower_bound(target);
     int closest = *it;
     if (it != s.begin()) {
         --it;
         if (target - *it <= closest - target)
             closest = *it;
     }
-    std::cout << "closest to " << target << ": " << closest << "\n"; // 5 or 7
+    std::cout << "closest to " << target << ": " << closest << "\n";
 }
 ```
 
@@ -2108,7 +2272,6 @@ int main() {
     std::multiset<int> ms = {1, 3, 3, 5, 5, 5};
     std::cout << "count of 5: " << ms.count(5) << "\n"; // 3
 
-    // remove exactly one occurrence of 5
     auto it = ms.find(5);
     if (it != ms.end()) ms.erase(it);
     std::cout << "count of 5 after erase: " << ms.count(5) << "\n"; // 2
@@ -2123,21 +2286,31 @@ int main() {
 
 **When to use:** need a sorted key-value store — ordered frequency map, coordinate compression, interval tracking.
 
-| Operation | Complexity |
-|---|---|
-| `operator[](key)` | O(log n) — inserts default if missing |
-| `at(key)` | O(log n) — throws if missing |
-| `insert({k, v})` | O(log n) |
-| `erase(key)` / `erase(it)` | O(log n) / amortized O(1) |
-| `find(key)` | O(log n) |
-| `lower_bound` / `upper_bound` | O(log n) |
-| `size()` | O(1) |
+| Function(s) | What it does | Time | Extra space | Notes |
+|---|---|---|---|---|
+| `operator[](key)` | access mapped value, inserting default if missing | O(log n) | O(1) | only on non-const `map` |
+| `at(key)` | access without insertion | O(log n) | O(1) | throws if missing |
+| `insert({k, v})`, `emplace(...)` | insert if absent | O(log n) | O(1) | does not overwrite existing |
+| `insert_or_assign(key, value)` | insert or overwrite | O(log n) | O(1) | C++17 |
+| `try_emplace(key, args...)` | insert only if absent, construct lazily | O(log n) | O(1) | avoids constructing on collision (C++17) |
+| `erase(it)` / `erase(key)` / `erase(range)` | erase entries | amort O(1) / O(log n) / O(log n + k) | O(1) | |
+| `find`, `contains`, `count` | key lookup | O(log n) | O(1) | `count` is `0` or `1` |
+| `lower_bound` / `upper_bound` / `equal_range` | ordered key queries | O(log n) | O(1) | essential for interval problems |
+| `extract`, `merge` | node-handle transfers | logarithmic | O(1) | C++17 |
+
+Key differences:
+
+- `operator[]` vs `at()`: `operator[]` inserts missing keys; `at()` does not.
+- `insert` vs `insert_or_assign` vs `try_emplace`:
+  - `insert`: keep old value if key exists
+  - `insert_or_assign`: overwrite old value if key exists
+  - `try_emplace`: do nothing if key exists, avoid constructing value unnecessarily
 
 **Iterator invalidation:** same as `std::set` — only erased iterator is invalidated.
 
 **Interview patterns:**
 - Ordered map for interval/range problems.
-- `operator[]` is convenient but inserts a default value on missing key — be careful in read-only contexts; use `find` or `count` instead.
+- `operator[]` is convenient but inserts a default value on missing key — use `find` or `count` for read-only contexts.
 
 ```cpp
 #include <map>
@@ -2149,10 +2322,8 @@ int main() {
     std::string words[] = {"apple", "banana", "apple", "cherry", "banana", "apple"};
     for (const auto& w : words) freq[w]++;
 
-    // iterate in sorted key order
     for (const auto& [word, count] : freq)
         std::cout << word << ": " << count << "\n";
-    // apple: 3, banana: 2, cherry: 1
 }
 ```
 
@@ -2202,6 +2373,36 @@ int main() {
 
 Unordered containers use **hash tables** for average-case O(1) lookup. They do not maintain any order.
 
+**How they work internally (beginner-friendly):**
+An unordered container maintains an array of "buckets." When you insert a key, the container computes `hash(key) % bucket_count` to pick a bucket, then stores the element in that bucket. If two keys map to the same bucket (a *collision*), they are chained together — typically as a linked list within that bucket. When the average bucket occupancy (*load factor* = `size / bucket_count`) exceeds a threshold (default 1.0), the container *rehashes*: allocates a bigger bucket array and re-distributes all elements. Rehashing is O(n) and invalidates all iterators.
+
+```
+Bucket 0: → [key_A] → [key_D]
+Bucket 1: → (empty)
+Bucket 2: → [key_B]
+Bucket 3: → [key_C] → [key_E] → [key_F]
+```
+
+Worst case: all keys hash to the same bucket → O(n) per operation. This can happen with bad hash functions or adversarial inputs.
+
+---
+
+#### Shared Bucket-Management APIs
+
+These matter across all unordered containers:
+
+| Function | What it does | Time | Notes |
+|---|---|---|---|
+| `bucket_count()` | number of buckets | O(1) | not number of elements |
+| `bucket(key)` | bucket index for key | O(1) avg | debugging / analysis tool |
+| `bucket_size(i)` | elements in bucket `i` | O(bucket size) | collision inspector |
+| `load_factor()` | `size() / bucket_count()` | O(1) | average bucket occupancy |
+| `max_load_factor()` | read/set rehash threshold | O(1) | tuning knob |
+| `rehash(n)` | force bucket count ≥ `n` | average O(n) | invalidates all iterators |
+| `reserve(n)` | ensure buckets for ≥ `n` elements | average O(n) | best practice before bulk insert |
+
+`rehash` talks in bucket counts; `reserve` talks in expected element count. Prefer `reserve()` for normal usage.
+
 ---
 
 #### `std::unordered_set<T>`
@@ -2214,9 +2415,9 @@ Unordered containers use **hash tables** for average-case O(1) lookup. They do n
 
 | Operation | Average | Worst Case |
 |---|---|---|
-| `insert(val)` | O(1) | O(n) |
-| `erase(val)` | O(1) | O(n) |
-| `find(val)` | O(1) | O(n) |
+| `insert(val)` / `emplace(...)` | O(1) | O(n) |
+| `erase(val)` / `erase(it)` | O(1) | O(n) |
+| `find(val)` / `contains(val)` | O(1) | O(n) |
 | `count(val)` | O(1) | O(n) |
 | `size()` | O(1) | O(1) |
 
@@ -2265,13 +2466,20 @@ Same internal structure and complexity as `unordered_set` but stores key-value p
 |---|---|---|
 | `operator[](key)` | O(1) | O(n) |
 | `at(key)` | O(1) | O(n) |
-| `insert({k,v})` | O(1) | O(n) |
-| `erase(key)` | O(1) | O(n) |
-| `find(key)` | O(1) | O(n) |
-| `count(key)` | O(1) | O(n) |
+| `insert({k,v})` / `emplace(...)` | O(1) | O(n) |
+| `insert_or_assign(key, value)` | O(1) | O(n) |
+| `try_emplace(key, args...)` | O(1) | O(n) |
+| `erase(key)` / `erase(it)` | O(1) | O(n) |
+| `find(key)` / `contains(key)` / `count(key)` | O(1) | O(n) |
 | `size()` | O(1) | O(1) |
 
 **Iterator invalidation:** same as `unordered_set`.
+
+Key differences:
+
+- `unordered_map` vs `map`: average O(1) vs O(log n), but no order and weaker worst case.
+- `operator[]` vs `at()`: same insertion-on-miss semantics as `map`.
+- `try_emplace` is the API to remember when mapped-value construction is expensive.
 
 **Interview patterns:**
 - **Two-sum:** store value → index.
@@ -2285,7 +2493,7 @@ Same internal structure and complexity as `unordered_set` but stores key-value p
 #include <iostream>
 
 std::vector<int> twoSum(const std::vector<int>& nums, int target) {
-    std::unordered_map<int, int> seen; // value -> index
+    std::unordered_map<int, int> seen;
     for (int i = 0; i < (int)nums.size(); ++i) {
         int complement = target - nums[i];
         auto it = seen.find(complement);
@@ -2355,7 +2563,7 @@ struct SafeHash {
 
 ### Container Adaptors
 
-Adaptors wrap an underlying container and expose a restricted interface.
+Adaptors wrap an underlying container and expose a restricted interface. They do **not** expose iterators.
 
 ---
 
@@ -2364,6 +2572,9 @@ Adaptors wrap an underlying container and expose a restricted interface.
 **Header:** `<stack>`
 
 **Default underlying:** `std::deque<T>` (can also use `vector` or `list`).
+
+**How it works internally (beginner-friendly):**
+A stack is not a separate data structure — it is a wrapper that restricts a sequence container (by default `deque`) to LIFO (Last In, First Out) access only. You can only push to the top, peek at the top, and pop from the top.
 
 **Interface:** `push`, `pop`, `top`, `size`, `empty`.
 
@@ -2405,6 +2616,9 @@ int main() {
 
 **Default underlying:** `std::deque<T>`.
 
+**How it works internally (beginner-friendly):**
+Like `stack`, a queue is a wrapper — it restricts a sequence container to FIFO (First In, First Out) access. You push to the back and pop from the front. The default `deque` backend is ideal because it supports both `push_back` and `pop_front` efficiently.
+
 **Interface:** `push`, `pop`, `front`, `back`, `size`, `empty`.
 
 **When to use:** FIFO semantics — BFS, level-order traversal, task scheduling.
@@ -2414,12 +2628,11 @@ int main() {
 #include <vector>
 #include <iostream>
 
-// BFS shortest path on unweighted grid
 int shortestPath(std::vector<std::vector<int>>& grid, std::pair<int,int> src, std::pair<int,int> dst) {
     int m = grid.size(), n = grid[0].size();
     std::queue<std::pair<int,int>> q;
     q.push(src);
-    grid[src.first][src.second] = -1; // visited
+    grid[src.first][src.second] = -1;
     int steps = 0;
     int dirs[] = {0,1,0,-1,0};
     while (!q.empty()) {
@@ -2458,7 +2671,19 @@ int main() {
 
 **Default:** max-heap. Elements sorted so `top()` returns the largest.
 
-**Internal structure:** binary heap stored in a `vector`.
+**How it works internally (beginner-friendly):**
+A priority queue stores elements as a **binary heap** inside a `std::vector`. A binary heap is a complete binary tree where every parent is greater than or equal to its children (for a max-heap). The tree is stored flat in the vector: for element at index `i`, its children are at `2i+1` and `2i+2`, and its parent is at `(i-1)/2`. `push` adds to the end and "bubbles up"; `pop` swaps the root with the last element, removes it, and "bubbles down." Both are O(log n).
+
+```
+Vector:  [ 9, 7, 5, 3, 1, 4, 2 ]
+
+Heap view:
+        9
+       / \
+      7   5
+     / \ / \
+    3  1 4  2
+```
 
 | Operation | Complexity |
 |---|---|
@@ -2477,12 +2702,10 @@ int main() {
 #include <iostream>
 
 int main() {
-    // max-heap (default)
     std::priority_queue<int> maxHeap;
     maxHeap.push(3); maxHeap.push(1); maxHeap.push(5);
     std::cout << "max: " << maxHeap.top() << "\n"; // 5
 
-    // min-heap
     std::priority_queue<int, std::vector<int>, std::greater<int>> minHeap;
     minHeap.push(3); minHeap.push(1); minHeap.push(5);
     std::cout << "min: " << minHeap.top() << "\n"; // 1
@@ -2500,7 +2723,6 @@ int main() {
 int main() {
     using Edge = std::pair<int, int>; // {distance, node}
 
-    // min-heap by distance
     std::priority_queue<Edge, std::vector<Edge>, std::greater<Edge>> pq;
     pq.push({10, 1});
     pq.push({3, 2});
@@ -2510,7 +2732,6 @@ int main() {
         auto [dist, node] = pq.top(); pq.pop();
         std::cout << "node " << node << " dist " << dist << "\n";
     }
-    // node 2 dist 3, node 3 dist 7, node 1 dist 10
 }
 ```
 
@@ -2539,6 +2760,12 @@ int main() {
 }
 ```
 
+Key differences:
+
+- Default is a **max-heap**. `std::greater<T>` makes a min-heap.
+- There is no decrease-key or iterator access; Dijkstra commonly pushes duplicate states and skips stale ones.
+- C++23 adds `push_range(range)` for batch insertion.
+
 ---
 
 ### Utility Types
@@ -2561,10 +2788,8 @@ int main() {
     std::pair<int, int> p = {3, 5};
     auto [x, y] = p; // C++17 structured binding
 
-    // pairs compare lexicographically — sort by first, then second
     std::vector<std::pair<int,int>> intervals = {{3,5},{1,4},{1,2}};
     std::sort(intervals.begin(), intervals.end());
-    // result: {1,2}, {1,4}, {3,5}
 
     for (auto [a, b] : intervals)
         std::cout << "[" << a << "," << b << "] ";
@@ -2586,14 +2811,10 @@ Generalization of `pair` for 3+ elements. Heavier syntax; prefer `pair` or a nam
 int main() {
     std::tuple<int, double, std::string> t = {1, 3.14, "hello"};
 
-    // access by index
     std::cout << std::get<0>(t) << " " << std::get<2>(t) << "\n";
 
-    // structured binding (C++17)
     auto [i, d, s] = t;
     std::cout << i << " " << d << " " << s << "\n";
-
-    // comparison is lexicographic, like pair
 }
 ```
 
@@ -2623,7 +2844,6 @@ int main() {
     else
         std::cout << "not found\n";
 
-    // value_or provides a default
     std::cout << findFirst({1,2,3}, 99).value_or(-1) << "\n"; // -1
 }
 ```
@@ -2636,12 +2856,16 @@ int main() {
 
 Fixed-size bit array. Size `N` must be a compile-time constant. Useful for subset DP, bitmask problems, sieve of Eratosthenes.
 
+**How it works internally (beginner-friendly):**
+A bitset is stored as one or more machine words (e.g., 64-bit integers). Each bit in the word represents one position in the bitset. Operations like `count()` use hardware-accelerated popcount, and bitwise operations like `&`, `|`, `^` process 64 bits at a time. This makes bitset dramatically faster and more compact than a `vector<bool>` for fixed-size bit manipulation.
+
 | Operation | Complexity |
 |---|---|
 | `set(i)` / `reset(i)` / `flip(i)` | O(1) |
 | `test(i)` / `operator[]` | O(1) |
 | `count()` (popcount) | O(N/64) |
 | `&`, `\|`, `^`, `~`, `<<`, `>>` | O(N/64) |
+| `all()`, `any()`, `none()` | O(N/64) |
 | `to_ulong()` / `to_string()` | O(N) |
 
 ```cpp
@@ -2655,10 +2879,9 @@ int main() {
     b.flip();
     std::cout << "flipped: " << b << "\n"; // 01001101
 
-    // sieve of Eratosthenes
     constexpr int N = 100;
     std::bitset<N + 1> is_prime;
-    is_prime.set(); // all true
+    is_prime.set();
     is_prime[0] = is_prime[1] = 0;
     for (int i = 2; i * i <= N; ++i)
         if (is_prime[i])
@@ -2672,6 +2895,65 @@ int main() {
 
 ---
 
+## Common Function Differences
+
+### `push_back` vs `emplace_back`
+
+- `push_back(obj)` inserts an existing object.
+- `emplace_back(args...)` constructs the element in place from constructor arguments.
+- Complexity is the same.
+- `emplace_back` may avoid a temporary, but only helps when constructor arguments are natural and the type is expensive to move/copy.
+
+### `insert` vs `emplace`
+
+- `insert` takes a ready-made value object.
+- `emplace` forwards constructor arguments.
+- For associative containers, `emplace` can still perform work even when insertion fails; it is not "always faster."
+
+### `insert` vs `try_emplace` vs `insert_or_assign`
+
+- `insert`: do not overwrite existing mapped value.
+- `try_emplace`: insert only if absent and construct mapped value lazily.
+- `insert_or_assign`: insert if absent, otherwise overwrite.
+
+### `find` vs `count` vs `contains`
+
+- `find` gives an iterator, so you can access or erase the element efficiently.
+- `count` is most useful in multi-containers; on unique-key containers it is just `0` or `1`.
+- `contains` is the clean boolean membership test (C++20).
+
+### `lower_bound` vs `upper_bound` vs `equal_range`
+
+- `lower_bound(x)`: first element not less than `x` (`>= x`)
+- `upper_bound(x)`: first element greater than `x` (`> x`)
+- `equal_range(x)`: both together; ideal for duplicate-key containers
+
+### `operator[]` vs `at()`
+
+- `operator[]` does unchecked access on sequence containers.
+- On `map`/`unordered_map`, `operator[]` also inserts default values for missing keys.
+- `at()` checks presence/bounds and never inserts.
+
+### `reserve` vs `resize`
+
+- `reserve(n)` changes capacity only.
+- `resize(n)` changes the number of elements.
+- Interview bug: calling `reserve(n)` then writing `v[i]` for `i < n` is still invalid if `size() == 0`.
+
+### `clear` vs erase-remove idiom vs container-member removal
+
+- `clear()` erases everything.
+- On `vector`/`deque`/`string`, use `erase(remove_if(...), end())`.
+- On `list`/`forward_list`, prefer member `remove` / `remove_if`, because they really unlink nodes.
+
+### `rehash` vs `reserve` on unordered containers
+
+- `rehash(buckets)` talks in bucket counts.
+- `reserve(elements)` talks in expected element count and derives bucket count from `max_load_factor()`.
+- Prefer `reserve()` for normal usage.
+
+---
+
 ## Algorithms
 
 **Header:** `<algorithm>` (plus `<numeric>` for numeric algorithms).
@@ -2679,7 +2961,6 @@ int main() {
 All standard algorithms operate on **iterator ranges** `[first, last)`. They do not modify the container's size — they rearrange or read elements in-place.
 
 ---
-
 ### Sorting
 
 #### `std::sort`
@@ -3541,6 +3822,59 @@ int main() {
     std::cout << add5_lambda(3) << "\n"; // 8
 }
 ```
+
+---
+
+## Interview-Focused Q&A
+
+**Why is `vector` usually preferred over `list` even though `list` has O(1) insertion/erasure?**
+
+Because interview code usually cares more about cache locality, lower memory overhead, and fast iteration than about arbitrary-position insertion. `list` wins only when you already have iterators to nodes and need stable references or splice-style relinking (e.g., LRU cache).
+
+**When should I choose `deque` over `vector`?**
+
+Choose `deque` when you need efficient `push_front`/`pop_front` in addition to back operations (sliding window maximum, BFS with level tracking). If you only append and index, `vector` is simpler and faster.
+
+**`map` or `unordered_map`?**
+
+- `map`: sorted keys, range queries, deterministic O(log n), predecessor/successor logic.
+- `unordered_map`: average O(1) lookup/update, better for plain frequency tables and memoization.
+
+**Why can `unordered_map` degrade badly?**
+
+Hash collisions can force many keys into the same bucket, turning average O(1) operations into O(n) worst-case. Bad or adversarial inputs make this relevant. Use `reserve()` and a quality hash function to mitigate.
+
+**Why does `list::size()` have a historical footnote?**
+
+Before C++11, constant-time `size()` was not required for `list`. Since C++11, `list::size()` is required to be O(1).
+
+**Why does `priority_queue` not support decrease-key?**
+
+The adaptor intentionally exposes a minimal heap interface. In Dijkstra, the standard workaround is to push a new pair `(better_distance, node)` and ignore stale entries when popped.
+
+**Why can `operator[]` on `map` or `unordered_map` be dangerous?**
+
+It inserts missing keys with default-constructed mapped values. Convenient for counting (`mp[key]++`), but buggy for read-only membership checks where you don't want silent insertion.
+
+**What is the standard LRU-cache STL design?**
+
+`std::list<std::pair<Key, Value>>` for recency order plus `std::unordered_map<Key, list::iterator>` for O(1) lookup and node moves via `splice`.
+
+**When do I use `multiset` instead of `priority_queue`?**
+
+Use `multiset` when you need ordered iteration, deletion of arbitrary elements, predecessor/successor queries, or duplicate-aware window maintenance. Use `priority_queue` when you only need repeated access to the best element.
+
+**`push_back` or `emplace_back` in interviews?**
+
+Use whichever is clearer. Prefer `emplace_back` when you naturally have constructor arguments; prefer `push_back` when you already have the object.
+
+**Is `std::string` guaranteed to use SSO?**
+
+No. Many implementations do, but the standard does not require it. Never rely on SSO for correctness or complexity guarantees.
+
+**Why does `reserve()` matter on vectors and unordered containers?**
+
+It reduces repeated reallocations/rehashes, improving constant factors and preventing invalidation surprises during bulk insertion.
 
 ---
 
